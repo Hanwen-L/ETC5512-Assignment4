@@ -1,0 +1,14 @@
+variable,raw_column,origin,type,units,description,valid_range_2025,missing_code
+site,(filename),derived,factor,Gold Coast / Tweed Heads,Which wave-monitoring buoy the record came from. Added when the two raw files are combined.,2 levels,none
+datetime,Date/Time (AEST),raw (parsed),datetime,AEST (UTC+10),Timestamp of the 26.6-minute wave record; readings every 30 minutes. Queensland does not observe daylight saving so AEST is constant.,2025-01-01 00:00 to 2025-12-31 23:30,none
+date,Date/Time (AEST),derived,date,calendar date,Calendar date extracted from datetime (for daily grouping).,2025-01-01 to 2025-12-31,none
+month,Date/Time (AEST),derived,ordered factor,Jan-Dec,Month label extracted from datetime.,Jan-Dec,none
+season,Date/Time (AEST),derived,factor,Summer/Autumn/Winter/Spring,Southern-Hemisphere season (Summer = Dec-Feb; Autumn = Mar-May; Winter = Jun-Aug; Spring = Sep-Nov).,4 levels,none
+month_num,Date/Time (AEST),derived,integer,1-12,Numeric month for ordering.,1-12,none
+hour,Date/Time (AEST),derived,integer,0-23,Hour of day for diurnal grouping.,0-23,none
+hs,Hs (m),raw,double,metres,Significant wave height: mean height of the highest one-third of waves in the record.,0.25-4.51,-99.9
+hmax,Hmax (m),raw,double,metres,Maximum individual wave height in the record.,0.40-7.47,-99.9
+tz,Tz (s),raw,double,seconds,Zero-upcrossing wave period (average period).,2.85-10.90,-99.9
+tp,Tp (s),raw,double,seconds,Peak energy wave period (period of the most energetic waves). Long Tp = swell; short Tp = local wind-sea.,2.53-20.00,-99.9
+dir,Peak Direction (degrees),raw,double,degrees from true north,Direction the peak-period waves are coming FROM relative to true north (0 = N; 90 = E; 180 = S; 270 = W).,0-328,-99.9
+sst,SST (degrees C),raw,double,degrees Celsius,Sea surface temperature from a sensor in the hull of the buoy.,18.25-28.43,-99.9

@@ -1,0 +1,25 @@
+site,month,month_num,season,n_obs,valid_hs,pct_missing_hs,mean_hs,max_hs,max_hmax,mean_tp,mean_sst,n_big_hs3
+Gold Coast,Jan,1,Summer,1488,1486,0.1,1.02,2.56,4.68,7.83,26.22,0
+Gold Coast,Feb,2,Summer,1344,1324,1.5,1.4,2.2,4.2,9.34,26.92,0
+Gold Coast,Mar,3,Autumn,1488,1115,25.1,1.46,4.16,7.47,8.89,25.94,72
+Gold Coast,Apr,4,Autumn,1440,1402,2.6,1.38,3.27,5.47,10.6,24.93,7
+Gold Coast,May,5,Autumn,1488,1438,3.4,1.57,2.55,5.44,10.7,23.32,0
+Gold Coast,Jun,6,Winter,1440,1415,1.7,1.02,1.95,3.72,10.04,22.09,0
+Gold Coast,Jul,7,Winter,1488,1488,0,0.87,2.24,4.05,10.7,20.67,0
+Gold Coast,Aug,8,Winter,1488,1485,0.2,1.5,4.51,7.42,10.44,20.29,14
+Gold Coast,Sep,9,Spring,1440,1388,3.6,0.84,1.55,2.99,9.81,20.67,0
+Gold Coast,Oct,10,Spring,1488,1432,3.8,0.95,2.32,4.59,8.14,20.96,0
+Gold Coast,Nov,11,Spring,1440,1361,5.5,0.86,1.6,2.82,8.73,21.65,0
+Gold Coast,Dec,12,Summer,1488,1392,6.5,0.94,2.01,3.6,8.28,23.76,0
+Tweed Heads,Jan,1,Summer,1488,1488,0,1.13,2.48,4.13,8.26,26.17,0
+Tweed Heads,Feb,2,Summer,1344,1344,0,1.51,2.33,4.37,9.37,26.91,0
+Tweed Heads,Mar,3,Autumn,1488,1482,0.4,1.92,5.41,10.05,9.06,25.87,311
+Tweed Heads,Apr,4,Autumn,1440,1439,0.1,1.45,3.08,5.33,10.07,24.88,4
+Tweed Heads,May,5,Autumn,1488,1488,0,1.67,2.73,5.31,10.54,23.23,0
+Tweed Heads,Jun,6,Winter,1440,1438,0.1,1.1,2.06,4.3,9.8,21.9,0
+Tweed Heads,Jul,7,Winter,1488,1488,0,0.97,2.08,3.78,10.35,20.68,0
+Tweed Heads,Aug,8,Winter,1488,1488,0,1.58,4.75,7.76,10.33,20.47,12
+Tweed Heads,Sep,9,Spring,1440,1440,0,0.96,1.88,3.32,9.3,20.89,0
+Tweed Heads,Oct,10,Spring,1488,1486,0.1,1.08,2.6,4.27,8.25,21.46,0
+Tweed Heads,Nov,11,Spring,1440,1434,0.4,1.01,1.84,3.38,8.78,22.27,0
+Tweed Heads,Dec,12,Summer,1488,1488,0,1.05,2.34,4.03,8.56,24.09,0

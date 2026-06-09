@@ -1,30 +1,230 @@
 ---
-title: "What is your blogpost title? Add it here??"
+title: "When do the big waves come? A year on two neighbouring wave buoys"
 subtitle: "Assignment 4 ETC5512"
-author: "Who are you?? Add your name here"
-format: html
-editor: visual
+author: "Hanwen Liu"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-location: left
+    code-fold: true
+    code-tools: true
+    code-summary: "Show code"
+    fig-width: 8
+    fig-height: 4.6
+    fig-align: center
+    fig-cap-location: bottom
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
 ---
 
+```{r}
+#| label: setup
+#| include: false
 
-::: {.panel-tabset}
+source("R/02_clean_process.R", local = knitr::knit_global())
 
-<!-- Task 1 Tab: Data and Documenting -->
+library(tidyverse)
+library(scales)
+library(sf)
+library(ozmaps)
+
+theme_set(
+  theme_minimal(base_size = 12) +
+    theme(panel.grid.minor = element_blank(),
+          plot.title = element_text(face = "bold"),
+          plot.subtitle = element_text(colour = "grey"),
+          strip.text = element_text(face = "bold"))
+)
+season_cols <- c(Summer = "red", Autumn = "yellow",
+                 Winter = "blue", Spring = "green")
+site_cols   <- c("Gold Coast" = "lightblue", "Tweed Heads" = "pink")
+
+buoys <- tibble(
+  site = factor(c("Gold Coast", "Tweed Heads"), levels = levels(waves$site)),
+  lon  = c(153.44095, 153.576333),
+  lat  = c(-27.9649,  -28.177083),
+  depth_m = c(17, 22)
+)
+haversine <- function(lo1, la1, lo2, la2) {
+  R <- 6371; dlat <- (la2 - la1) * pi/180; dlon <- (lo2 - lo1) * pi/180
+  a <- sin(dlat/2)^2 + cos(la1*pi/180) * cos(la2*pi/180) * sin(dlon/2)^2
+  2 * R * asin(sqrt(a))
+}
+dist_km <- haversine(buoys$lon[1], buoys$lat[1], buoys$lon[2], buoys$lat[2])
+
+gc         <- waves   %>% 
+  filter(site == "Gold Coast")
+monthly_gc <- monthly %>%  
+  filter(site == "Gold Coast")
+
+warm  <- monthly_gc %>% 
+  slice_max(mean_sst, n = 1)
+cool  <- monthly_gc %>% 
+  slice_min(mean_sst, n = 1)
+rough <- monthly_gc %>% 
+  slice_max(mean_hs,  n = 1)
+calm  <- monthly_gc %>% 
+  slice_min(mean_hs,  n = 1)
+sst_swing <- warm$mean_sst - cool$mean_sst
+
+n_big3   <- sum(gc$hs >= 3, na.rm = TRUE)
+pct_big3 <- 100 * mean(gc$hs >= 3, na.rm = TRUE)
+top_hs   <- gc %>% 
+  slice_max(hs,   n = 1)   
+top_hmax <- gc %>% 
+  slice_max(hmax, n = 1)   
+mar_miss <- monthly_gc$pct_missing_hs[monthly_gc$month == "Mar"]
+
+cor_hs_tp  <- cor(gc$hs, gc$tp,  use = "complete.obs")
+cor_hs_sst <- cor(gc$hs, gc$sst, use = "complete.obs")
+cor_month  <- cor(monthly_gc$mean_hs, monthly_gc$mean_sst)
+
+site_stats <- waves %>% 
+  group_by(site) %>% 
+  summarise(mean_hs = mean(hs, na.rm = TRUE),
+            mean_sst = mean(sst, na.rm = TRUE),
+            max_hmax = max(hmax, na.rm = TRUE), .groups = "drop")
+gc_mhs  <- site_stats$mean_hs[site_stats$site == "Gold Coast"]
+tw_mhs  <- site_stats$mean_hs[site_stats$site == "Tweed Heads"]
+gc_hmax <- site_stats$max_hmax[site_stats$site == "Gold Coast"]
+tw_hmax <- site_stats$max_hmax[site_stats$site == "Tweed Heads"]
+
+wide <- waves %>% 
+  mutate(s = recode(site, "Gold Coast" = "gc", "Tweed Heads" = "tw")) %>% 
+  select(s, datetime, hs, sst) %>% 
+  pivot_wider(names_from = s, values_from = c(hs, sst))
+hsp  <- wide %>% 
+  filter(!is.na(hs_gc),  !is.na(hs_tw))
+sstp <- wide %>% 
+  filter(!is.na(sst_gc), !is.na(sst_tw))
+cor_hs_sites  <- cor(hsp$hs_gc,  hsp$hs_tw)
+cor_sst_sites <- cor(sstp$sst_gc, sstp$sst_tw)
+n_matched     <- nrow(hsp)
+mar_tw <- monthly %>% 
+  filter(site == "Tweed Heads", month == "Mar")
+
+states <- ozmaps::ozmap_states
+
+fmt1 <- function(x) formatC(x, format = "f", digits = 1)
+fmt2 <- function(x) formatC(x, format = "f", digits = 2)
+```
+
+::: panel-tabset
+<!-- ===================================================================== -->
+
+<!-- TASK 1 -->
+
 ## Data and Documenting
 
-### What's in this section
+### Q1 — The question
 
-Here is where you should provide the more comprehensive details about your data and your processing steps.
+This blog post answers, from a full year of half-hourly wave-buoy records:
 
-These are the data details that an "average" blog post reader is not concerned with (Task 1). 
+> **How did wave conditions and sea temperature change across 2025 off the Gold Coast, when did the biggest-wave events arrive, and how does wave height relate to wave period (swell versus local wind-sea) — and does a second buoy 27 km south tell the same story?**
 
-### Remember
+I chose this question because it is tightly scoped — one year, two open datasets — yet rich enough to exercise a wide range of the unit's skills: datetime parsing, sentinel-value cleaning, aggregating a 17,520-row half-hourly series, joining two datasets on a common time grid, and time-series, seasonal, spatial and correlation analysis. Adding the second buoy is deliberate: rather than just describing one record, it lets me *test* whether the patterns are real signals in the ocean or merely one instrument's quirks.
 
-Please mention any additional files that you want the markers to review, eg. read me, meta data etc.
+### Q2 — The data {#sec-data}
+
+I use **two** datasets from the **Queensland Government Open Data Portal**, both the "Wave data – 2025" resource of a *Coastal Data System – Waves* dataset, both **observational sensor data** from a **Datawell Directional Waverider** buoy recording a 26.6-minute sample every **30 minutes**.
+
+|   | **Dataset 1 — Gold Coast** (primary) | **Dataset 2 — Tweed Heads** (comparison) |
+|------------------------|------------------------|------------------------|
+| Source / custodian | DETSI + City of Gold Coast | DETSI + Tweed River Sand Bypassing |
+| Location | 27.965° S, 153.441° E, 17 m depth | 28.177° S, 153.576° E, 22 m depth |
+| Rows (2025) | 17,520 | 17,520 (after clipping to 2025) |
+| Licence | CC BY 4.0 | CC BY 4.0 |
+| Portal | [link](https://www.data.qld.gov.au/dataset/coastal-data-system-waves-gold-coast) | [link](https://www.data.qld.gov.au/dataset/coastal-data-system-waves-tweed-heads) |
+
+**Type.** Neither is a survey or an experiment; each is effectively a **census** of every valid half-hourly record the buoy made in 2025 — a complete, regular time grid.
+
+**Why this suits the question.** Each file carries exactly the variables I need — significant and maximum wave height (`Hs`, `Hmax`), two wave periods (`Tz`, `Tp`), peak wave direction, and sea surface temperature (`SST`). One buoy answers the "when" questions; the **second, 27 km south, is what lets me check whether the answers are real**. Both are \~1 MB and openly licensed, so the work is fully reproducible.
+
+**Limitations.**
+
+- **Missing data is coded, not blank.** Failed readings are the sentinel `-99.9`; untreated it would poison every average. Gold Coast is \~4.5% missing for wave parameters — but **not evenly**: **March alone is \~`r fmt1(mar_miss)`% missing** (an outage). Tweed Heads is far more complete (\~0.1%), which turns out to matter.
+- **Two buoys, one year.** Findings describe these sites in 2025, not a long-term climatology.
+- **Point in space.** A buoy measures open-water sea state, not the breaking surf at any particular beach.
+
+**Ethics & privacy.** Both datasets measure the physical ocean only — **no people, vessels or identifiable subjects** — so privacy/re-identification risk is negligible. The obligations are *attribution* (CC BY 4.0) and *responsible interpretation*: this is a curiosity project, **not** a marine-safety product.
+
+### Q3 — Downloading and processing the data
+
+**Download (`R/01_download.R`).** The script downloads each buoy's CSV from its portal URL and **falls back to the committed copy in `data/raw/`** if the portal is unreachable, so the pipeline reproduces online *or* offline. Raw files are never edited by hand.
+
+```{r}
+#| eval: false
+#| code-fold: false
+
+ok <- tryCatch({ download.file(s$url, s$dest, mode = "wb"); TRUE },
+               error = function(e) FALSE, warning = function(w) FALSE)
+if (!ok && !file.exists(s$dest)) stop("Download failed and no committed copy.")
+header <- strsplit(readLines(s$dest, n = 1), ",")[[1]]
+stopifnot(identical(header, expected_cols))
+```
+
+**Process (`R/02_clean_process.R`).** The core steps — applied to both buoys:
+
+```{r}
+#| eval: false
+#| code-fold: false
+
+read_buoy <- function(path, site) {
+  read_csv(path, col_types = cols(`Date/Time (AEST)` = col_character(),
+                                  .default = col_double())) %>% 
+    mutate(site = site, .before = 1)
+}
+waves <- bind_rows(read_buoy(gc_path, "Gold Coast"),
+                   read_buoy(tw_path, "Tweed Heads")) %>% 
+  mutate(datetime = ymd_hms(`Date/Time (AEST)`, truncated = 1, tz = "Australia/Brisbane")) %>% 
+  mutate(across(c(hs, hmax, tz, tp, dir, sst), \(x) if_else(x == -99.9, NA, x))) %>% 
+  filter(year(datetime) == 2025)  
+```
+
+The pipeline then runs **per-site assertions** (each site: 17,520 rows, every timestamp parsed, no duplicates, a regular 30-minute grid) and writes two **processed** datasets: `waves_2025_clean.csv` (tidy half-hourly, both sites, sentinel → `NA`) and `waves_2025_monthly.csv` (site × month summary). Raw and processed data are both saved under `data/`.
+
+### Q4 — Data documentation for markers
+
+Full documentation lives alongside the data:
+
+- **`docs/metadata.md`** — provenance, custodians, licences, coverage, instruments, ethics (both buoys).
+- **`docs/data_dictionary.csv`** — every variable with units, valid 2025 range and missing code.
+- **`README.md`** — folder map and one-command reproduction steps.
+
+A **sample of a raw file** (note the `-99.9` sentinel and the half-hourly step):
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+read_csv("data/raw/gold-coast-mk4-2025-waveverifieddata.csv", n_max = 3,
+         col_types = cols(.default = col_character())) |>
+  knitr::kable(caption = "First 3 rows of the Gold Coast raw CSV.")
+```
+
+**Missingness by month and site** — the one big gap is Gold Coast in March; Tweed Heads is near-complete all year (this is what makes it a useful cross-check):
+
+```{r}
+#| label: tbl-missing
+#| code-fold: true
+#| fig-height: 3.0
+#| fig-cap: "Percentage of half-hours with no valid Hs reading, by month and buoy. Gold Coast's ~25% March outage is the one large gap; Tweed Heads is near-complete all year."
+monthly |>
+  ggplot(aes(month, pct_missing_hs, fill = site)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+  scale_fill_manual(values = site_cols, name = NULL) +
+  labs(x = NULL, y = "% missing Hs",
+       title = "Where are the gaps?  Missing wave readings by month, 2025") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.12))) +
+  theme(legend.position = "top")
+```
 
 <!-- Task 2 Tab: Writing your blogpost -->
 
-## Blog post 
+## Blog post
 
 ### What's in this section
 
@@ -32,17 +232,17 @@ Here is where you should write your blogpost! (Task 2)
 
 ### Blogpost Structure
 
-There is no strict structure for you to follow. However, here is a skeleton structure you may find helpful. 
+There is no strict structure for you to follow. However, here is a skeleton structure you may find helpful.
 
-1. Title (is set at the top of this document)
-2. Motivation  
-3. Data  
-4. Analysis     
-5. Conclusions  
-6. References 
-
+1.  Title (is set at the top of this document)
+2.  Motivation\
+3.  Data\
+4.  Analysis\
+5.  Conclusions\
+6.  References
 
 <!-- Task 3 Tab: Behind the Scenes -  -->
+
 ## Behind the Scenes
 
 ### What's in this section
@@ -50,4 +250,4 @@ There is no strict structure for you to follow. However, here is a skeleton stru
 Here is where you should tell us about your reflection on your analysis (Task 3).
 
 Again, these are the details about **your** perspective and the gritty details behind the scenes of your analysis.
-
+:::
