@@ -1,0 +1,53 @@
+---
+title: "What is your blogpost title? Add it here??"
+subtitle: "Assignment 4 ETC5512"
+author: "Who are you?? Add your name here"
+format: html
+editor: visual
+---
+
+
+::: {.panel-tabset}
+
+<!-- Task 1 Tab: Data and Documenting -->
+## Data and Documenting
+
+### What's in this section
+
+Here is where you should provide the more comprehensive details about your data and your processing steps.
+
+These are the data details that an "average" blog post reader is not concerned with (Task 1). 
+
+### Remember
+
+Please mention any additional files that you want the markers to review, eg. read me, meta data etc.
+
+<!-- Task 2 Tab: Writing your blogpost -->
+
+## Blog post 
+
+### What's in this section
+
+Here is where you should write your blogpost! (Task 2)
+
+### Blogpost Structure
+
+There is no strict structure for you to follow. However, here is a skeleton structure you may find helpful. 
+
+1. Title (is set at the top of this document)
+2. Motivation  
+3. Data  
+4. Analysis     
+5. Conclusions  
+6. References 
+
+
+<!-- Task 3 Tab: Behind the Scenes -  -->
+## Behind the Scenes
+
+### What's in this section
+
+Here is where you should tell us about your reflection on your analysis (Task 3).
+
+Again, these are the details about **your** perspective and the gritty details behind the scenes of your analysis.
+
