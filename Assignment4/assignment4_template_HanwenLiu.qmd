@@ -226,20 +226,155 @@ monthly |>
 
 ## Blog post
 
-### What's in this section
+### Reading the ocean's diary, one buoy at a time
 
-Here is where you should write your blogpost! (Task 2)
+Every thirty minutes, a yellow buoy bobbing off the Gold Coast writes a single line in a diary: how big the waves are, how far apart, which way they're marching, and how warm the sea is. Do that for a year and you get **17,520 lines** — a complete record of one patch of ocean through 2025. I wanted to read that diary and answer three things I've always wondered about as someone who watches the coast: *when is the sea roughest, when do the genuinely big swells turn up, and what does the data say about "swell" versus messy local "wind-sea"?* Then I do the honest thing and ask a fourth: **is any of it real, or just this one buoy?**
 
-### Blogpost Structure
+#### Two rhythms that don't keep time together
 
-There is no strict structure for you to follow. However, here is a skeleton structure you may find helpful.
+The first thing the year reveals is that the ocean keeps **two different clocks**.
 
-1.  Title (is set at the top of this document)
-2.  Motivation\
-3.  Data\
-4.  Analysis\
-5.  Conclusions\
-6.  References
+```{r}
+#| label: fig-rhythms
+#| fig-cap: "Two seasonal rhythms off the Gold Coast in 2025. Sea temperature (top) follows a smooth solar cycle that lags the calendar — warmest in late summer, coldest in late winter. Wave height (bottom) does not: it peaks in autumn and has a sharp winter spike, and is calmest in spring. Points are coloured by Southern-Hemisphere season."
+#| fig-height: 5.4
+monthly_gc %>% 
+  transmute(month, season,
+            `Mean significant wave height (m)` = mean_hs,
+            `Mean sea surface temperature (°C)` = mean_sst) %>% 
+  pivot_longer(-c(month, season), names_to = "metric", values_to = "value") %>% 
+  ggplot(aes(month, value, group = 1)) +
+  geom_line(colour = "grey", linewidth = 0.7) +
+  geom_point(aes(colour = season), size = 3) +
+  facet_wrap(~ metric, ncol = 1, scales = "free_y") +
+  scale_colour_manual(values = season_cols, name = "Season") +
+  labs(x = NULL, y = NULL,
+       title = "The sea's temperature and its roughness follow different calendars") +
+  theme(legend.position = "top")
+```
+
+**Sea temperature** behaves exactly as you'd hope a thermometer would: a smooth wave from a warm **`r warm$month` (`r fmt1(warm$mean_sst)`°C)** down to a cold **`r cool$month` (`r fmt1(cool$mean_sst)`°C)** — a swing of about **`r fmt1(sst_swing)`°C** across the year. Notice it *lags the calendar*: the warmest month is late summer, not the summer solstice, and the coldest is late winter. That delay is the ocean's huge thermal inertia — water is slow to heat and slow to cool.
+
+**Wave height keeps a stubbornly different beat.** The roughest month is **`r rough$month` (mean Hs `r fmt2(rough$mean_hs)` m)** and the calmest is **`r calm$month` (`r fmt2(calm$mean_hs)` m)**. Seas build through autumn, throw a spike in late winter, then go quiet in spring — *not* tracking temperature at all. Waves are made by **wind and distant storms**, which have their own seasonal calendar, so the two curves drift in and out of step. That mismatch is the whole point of the chart, and it sets up a trap I'll spring at the end.
+
+#### When do the big waves actually come?
+
+A monthly average hides the drama. If I instead take the **biggest wave each day** and mark every half-hour where significant height topped a stormy **3 m** (only **`r n_big3`** half-hours all year, `r fmt2(pct_big3)`% of the time), the big events don't dribble out evenly — they **clump**.
+
+```{r}
+#| label: fig-events
+#| fig-cap: "Daily maximum significant wave height at the Gold Coast through 2025. Most days sit below 2 m; the genuinely big seas (red, Hs ≥ 3 m) cluster into a few multi-day events, overwhelmingly in autumn (early March) and a sharp burst in late winter (early August)."
+gc %>% 
+  group_by(date) %>% 
+  summarise(max_hs = max(hs, na.rm = TRUE), .groups = "drop") %>% 
+  mutate(max_hs = ifelse(is.finite(max_hs), max_hs, NA_real_)) %>% 
+  ggplot(aes(date, max_hs)) +
+  geom_hline(yintercept = 3, linetype = "dashed", colour = "grey") +
+  geom_line(colour = "grey", linewidth = 0.4) +
+  geom_point(data = ~ filter(.x, max_hs >= 3), colour = "red", size = 1.8) +
+  annotate("text", x = as.Date("2025-03-05"), y = 4.7, label = "early March",
+           colour = "red", size = 3.4, fontface = "bold") +
+  annotate("text", x = as.Date("2025-08-03"), y = 4.9, label = "early August",
+           colour = "red", size = 3.4, fontface = "bold") +
+  scale_x_date(date_breaks = "2 months", date_labels = "%b") +
+  labs(x = NULL, y = "Daily max Hs (m)",
+       title = "Big waves don't trickle in — they arrive in bunches")
+```
+
+Two events dominate the year, and the lovely twist is that they sit in **opposite seasons at opposite sea temperatures**:
+
+- **Early March (warm, autumn).** This event produced the year's **largest single wave**, an `Hmax` of **`r fmt2(top_hmax$hmax)` m** on **`r format(top_hmax$datetime, "%d %B")`**, while the sea was still a balmy **`r fmt1(top_hmax$sst)`°C** — the signature of a warm east-coast low / ex-tropical system. Gold Coast's \~25% March outage means we're probably *under*-counting this one (more on that below).
+- **Early August (cold, winter).** This produced the year's **highest significant height**, **Hs `r fmt2(top_hs$hs)` m** on **`r format(top_hs$datetime, "%d %B")`**, with the sea down at **`r fmt1(top_hs$sst)`°C** — a classic cold-season, long-period swell.
+
+So "big-wave season" in 2025 wasn't a single season at all: the two heavyweights came from completely different weather, half a year and \~6.5°C apart.
+
+#### Swell or slop? What the wave period tells us
+
+Surfers care less about raw height than about **period** — long, orderly *swell* from distant storms versus short, choppy *wind-sea* from local weather. Plotting every half-hour of height against peak period separates the two:
+
+```{r}
+#| label: fig-swell
+#| fig-cap: "Every valid half-hour of Gold Coast significant wave height vs peak period (colour = number of records, log scale). The cloud has two homes: short-period local wind-sea on the left, and a long-period swell band around 9–14 s on the right where the biggest seas live. Beyond ~14 s sit long but low waves — tired swell that has travelled a long way."
+gc %>% 
+  filter(!is.na(hs), !is.na(tp)) %>% 
+  ggplot(aes(tp, hs)) +
+  geom_bin2d(bins = 45) +
+  scale_fill_viridis_c(trans = "log10", name = "records", labels = label_number()) +
+  annotate("rect", xmin = 2, xmax = 8, ymin = 0, ymax = 4.7,
+           fill = NA, colour = "grey", linetype = "dotted") +
+  annotate("text", x = 5, y = 4.5, label = "wind-sea\n(short period)",
+           size = 3.2, colour = "grey", lineheight = 0.9) +
+  annotate("text", x = 13.5, y = 4.5, label = "swell\n(long period)",
+           size = 3.2, colour = "grey", lineheight = 0.9) +
+  labs(x = "Peak period Tp (s)", y = "Significant wave height Hs (m)",
+       title = "Two kinds of sea: choppy wind-sea and long-marching swell")
+```
+
+The relationship is real but **weak** (correlation `r fmt2(cor_hs_tp)`): longer-period seas tend to be bigger, yet plenty of long-period records are small. Binning confirms it — mean height climbs from \~0.9 m at the shortest periods to \~1.35 m in the **12–14 s** swell band, then *falls back* for the very longest periods (\> 14 s). Those longest waves are **decayed swell from far-off Southern Ocean storms**: long and orderly, but worn down to a low height by the journey. The biggest local seas, by contrast, ride the **9–14 s** band — long enough to pack energy, close enough to still be tall.
+
+#### One ocean, two buoys: is any of this real?
+
+Everything above rests on a single yellow float. A fair worry: what if the "story" is just *that* instrument? So I bring in a neighbour — the **Tweed Heads** buoy, **`r fmt1(dist_km)` km** south, just across the NSW border.
+
+```{r}
+#| label: fig-map
+#| fig-cap: "The two wave buoys: Gold Coast (QLD) and Tweed Heads (NSW), about 27 km apart on the same stretch of coast. State outlines from the ozmaps package."
+#| fig-height: 4.8
+#| fig-width: 6.6
+ggplot(states) +
+  geom_sf(fill = "white", colour = "grey", linewidth = 0.3) +
+  annotate("text", x = 152.95, y = -27.7,  label = "QUEENSLAND",
+           colour = "grey", size = 3, fontface = "bold") +
+  annotate("text", x = 152.9,  y = -28.43, label = "NEW SOUTH WALES",
+           colour = "grey", size = 3, fontface = "bold") +
+  geom_point(data = buoys, aes(lon, lat, fill = site),
+             shape = 21, size = 4.2, stroke = 0.7, colour = "white") +
+  geom_text(data = buoys, aes(lon, lat, label = site),
+            hjust = 0, nudge_x = 0.04, size = 3.6, fontface = "bold") +
+  scale_fill_manual(values = site_cols, guide = "none") +
+  coord_sf(xlim = c(152.75, 154.05), ylim = c(-28.5, -27.55), expand = FALSE) +
+  labs(x = NULL, y = NULL,
+       title = "Two buoys, ~27 km apart on the same coast") +
+  theme(panel.background = element_rect(fill = "lightblue", colour = NA),
+        panel.grid = element_line(colour = "grey"))
+```
+
+At the **`r format(n_matched, big.mark=",")`** half-hours when both were recording, their wave heights agree to a correlation of **`r fmt2(cor_hs_sites)`** and their sea temperatures to **`r fmt2(cor_sst_sites)`**. The seasonal cycle and the storm spikes are not one float's quirks — they are *the ocean*. Tweed runs a touch bigger (mean Hs **`r fmt2(tw_mhs)`** vs **`r fmt2(gc_mhs)`** m; biggest single wave **`r fmt2(tw_hmax)`** vs **`r fmt2(gc_hmax)`** m), consistent with its more exposed position.
+
+```{r}
+#| label: fig-compare
+#| fig-cap: "Daily maximum Hs at both buoys. The two lines move together all year and spike on the same days — but Gold Coast goes blank for much of March (its outage), exactly when a major swell hit. Tweed Heads, near-complete, covers the gap."
+waves %>% 
+  group_by(site, date) %>% 
+  summarise(max_hs = max(hs, na.rm = TRUE), .groups = "drop") %>% 
+  mutate(max_hs = ifelse(is.finite(max_hs), max_hs, NA_real_)) %>% 
+  ggplot(aes(date, max_hs, colour = site)) +
+  geom_hline(yintercept = 3, linetype = "dashed", colour = "grey70") +
+  geom_line(linewidth = 0.45) +
+  scale_colour_manual(values = site_cols, name = NULL) +
+  scale_x_date(date_breaks = "2 months", date_labels = "%b") +
+  labs(x = NULL, y = "Daily max Hs (m)",
+       title = "Same ocean, two buoys: the lines rise and fall together") +
+  theme(legend.position = "top")
+```
+
+The payoff is **March**. Gold Coast lost **`r fmt1(mar_miss)`%** of the month to its outage — right across a major event. Tweed Heads, **`r fmt1(mar_tw$pct_missing_hs)`%** missing, covered the gap and showed March peaking at **`r fmt2(mar_tw$max_hs)` m** — *rougher* than Gold Coast's broken record let on. The second buoy didn't just confirm the story; it **rescued the part the first one dropped.** That, more than any single statistic, is the argument for reaching past one dataset.
+
+#### A trap worth pointing out
+
+It's tempting to relate wave height to sea temperature directly, and if you do, you get a mild *positive* monthly correlation (**`r fmt2(cor_month)`**) — bigger waves in warmer months? That's a **seasonal mirage**. It only appears because autumn happens to be *both* still-warm *and* the stormiest part of 2025; there's no physical link. The two record-breaking events make the point better than any coefficient: one struck at `r fmt1(top_hmax$sst)`°C and the other at `r fmt1(top_hs$sst)`°C. Sea temperature and wave height are driven by **different machines** — the sun's slow heating versus the wind's fast storms — and reading causation into their overlap is exactly the kind of mistake a year of honest data helps you avoid.
+
+#### What the year says
+
+Across 2025 the buoys told a four-part story: sea temperature and wave height **march to different drummers**; the big swells **arrive in a couple of bunches** rather than spread evenly, from opposite seasons; wave **period** quietly separates local chop from ocean swell; and a second buoy 27 km south **confirms all of it at \~96% agreement** — while quietly filling the gap the first buoy left in March. None of it is a forecast — it's two buoys, one year — but it's a satisfying amount of structure to pull out of a couple of yellow floats and a year of patience.
+
+### References
+
+- Department of Environment, Tourism, Science and Innovation (Queensland Government). *Coastal Data System – Waves (Gold Coast): Wave data – 2025* \[data set\]. CC BY 4.0. <https://www.data.qld.gov.au/dataset/coastal-data-system-waves-gold-coast>
+- Department of Environment, Tourism, Science and Innovation (Queensland Government). *Coastal Data System – Waves (Tweed Heads): Wave data – 2025* \[data set\]. CC BY 4.0. <https://www.data.qld.gov.au/dataset/coastal-data-system-waves-tweed-heads>
+- Queensland Government. *Wave monitoring — field definitions & site locations.* <https://www.qld.gov.au/waves>
+- Wickham, H. et al. (2019). *Welcome to the tidyverse.* JOSS 4(43), 1686. R packages `tidyverse`, `lubridate`, `scales`.
+- Pebesma, E. (2018). *Simple Features for R (`sf`).* The R Journal 10(1), 439–446. Australian state boundaries via the `ozmaps` package.
 
 <!-- Task 3 Tab: Behind the Scenes -  -->
 
