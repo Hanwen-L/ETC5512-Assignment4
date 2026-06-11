@@ -2659,10 +2659,14 @@ Figure 5: Daily maximum Hs at both buoys. The two lines move together all year 
 </section>
 <section id="q8-how-i-used-ai" class="level3">
 <h3 class="anchored" data-anchor-id="q8-how-i-used-ai">Q8 — How I used AI</h3>
+<p>In this assignment, I used AI as a learning aid rather than a replacement for my own work. I drew on AI techniques to help clean the Gold Coast wave data — in particular, recoding the -99.9 sentinel values as NA and parsing the half-hourly timestamps — which taught me how to apply systematic data-processing logic to a real natural phenomenon, where missing readings are not random but often coincide with storms or buoy maintenance.</p>
+<p>It also helped me write and structure my .R script files more accurately. By asking the AI to explain errors and suggest cleaner approaches, I learned to organise my code into readable, reproducible steps and to debug more independently over time.</p>
+<p>Furthermore, I gained a deeper understanding of mapping techniques using the ozmaps and sf packages. The AI clarified how spatial data is stored as simple-features geometries and how to layer a monitoring-site point onto an Australian coastline map, which I then adapted and verified myself.</p>
+<p>Throughout, I treated AI suggestions as a starting point: I tested every piece of code against my actual data, confirmed the output made sense, and made sure I understood the reasoning before including it.</p>
 </section>
-<section id="q9-four-iterations-this-repositorys-git-history" class="level3">
-<h3 class="anchored" data-anchor-id="q9-four-iterations-this-repositorys-git-history">Q9 — Four iterations (this repository’s git history)</h3>
-<p>The iteration record is this repo’s four commits, and they show the work was not a straight line:</p>
+<section id="q9-four-iterations" class="level3">
+<h3 class="anchored" data-anchor-id="q9-four-iterations">Q9 — Four iterations</h3>
+<p>The iteration record is this <a href="https://github.com/Hanwen-L/ETC5512-Assignment4">repo’s</a> four commits, and they show the work was not a straight line:</p>
 <ol type="1">
 <li><strong><code>add template and data</code></strong> — the unit template plus both raw CSVs and the download script, committed <em>before</em> any analysis so every later step runs against a fixed, untouched input. The exploratory code at this point contains both early mistakes: the midnight-parsing bug and <code>-99.9</code> still being averaged as if it were data.</li>
 <li><strong><code>Task 1</code></strong> — the data work: the cleaning pipeline (timestamp fix, sentinel recoding, clipping Tweed Heads to 2025), the per-site assertions, and the documentation (<code>metadata.md</code>, <code>data_dictionary.csv</code>). The fixes in this commit changed every number downstream.</li>
@@ -2673,6 +2677,17 @@ Figure 5: Daily maximum Hs at both buoys. The two lines move together all year 
 </section>
 <section id="ai-use-statement" class="level3">
 <h3 class="anchored" data-anchor-id="ai-use-statement">AI Use Statement</h3>
+<p>In this assignment, I only used AI to assist with the correct use of R code and enhance analytical thinking and academic writing in English.</p>
+<p>More specifically, I used AI to :</p>
+<ul>
+<li><p>Suggestions about data cleaning.</p></li>
+<li><p>How to use .r files in Assignment 4.</p></li>
+<li><p>What are the limitations of the dataset?</p></li>
+<li><p>How to create a buoy map</p></li>
+<li><p>What kind of images can improve the quality of a post?</p></li>
+</ul>
+<p>I created all code, visuals, written text and interpretations independently.</p>
+<p>Here is the <a href="https://gemini.google.com/share/7f444e328bcf">link</a> to all prompts used.</p>
 </section>
 </div>
 </div>
@@ -3529,7 +3544,7 @@ Figure 5: Daily maximum Hs at both buoys. The two lines move together all year 
 <span id="cb10-414"><a href="#cb10-414" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-415"><a href="#cb10-415" aria-hidden="true" tabindex="-1"></a>The challenge I didn&#39;t see coming was **silent data loss**. I assumed a government CSV would be &quot;clean&quot;, and it is — but my own reading code could still lose data without a single error message. The midnight bug taught me to validate the *shape* of the data, not just its values: the pipeline now asserts, per site, that there are exactly 17,520 rows, every timestamp parses, none are duplicated, and the 30-minute grid is unbroken. If any of that breaks, it fails loudly instead of lying quietly.</span>
 <span id="cb10-416"><a href="#cb10-416" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-417"><a href="#cb10-417" aria-hidden="true" tabindex="-1"></a>The second challenge was realising the missing data was **not missing at random**. Gold Coast lost ~25% of March, and the gap sat exactly on top of the year&#39;s biggest swell — the outage was almost certainly *caused by* the storm I most wanted to measure. Just dropping the NAs would have silently under-counted the most interesting event in the data. That is what pushed me to bring in the Tweed Heads buoy: a near-complete second record that covered the gap, and showed March was even rougher than Gold Coast&#39;s broken record suggested. Turning a missing-data problem into a finding is the part of this project I&#39;m most pleased with.</span>
+<span id="cb10-417"><a href="#cb10-417" aria-hidden="true" tabindex="-1"></a>The second challenge was realising the missing data was **not missing at random**. Gold Coast lost \~25% of March, and the gap sat exactly on top of the year&#39;s biggest swell — the outage was almost certainly *caused by* the storm I most wanted to measure. Just dropping the NAs would have silently under-counted the most interesting event in the data. That is what pushed me to bring in the Tweed Heads buoy: a near-complete second record that covered the gap, and showed March was even rougher than Gold Coast&#39;s broken record suggested. Turning a missing-data problem into a finding is the part of this project I&#39;m most pleased with.</span>
 <span id="cb10-418"><a href="#cb10-418" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-419"><a href="#cb10-419" aria-hidden="true" tabindex="-1"></a>The quietest challenge was self-discipline: wave height and sea temperature are positively correlated month-to-month, and it would have been easy to report that as a finding. It is really just two seasonal curves overlapping — a confound, not a relationship.</span>
 <span id="cb10-420"><a href="#cb10-420" aria-hidden="true" tabindex="-1"></a></span>
@@ -3545,22 +3560,45 @@ Figure 5: Daily maximum Hs at both buoys. The two lines move together all year 
 <span id="cb10-430"><a href="#cb10-430" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-431"><a href="#cb10-431" aria-hidden="true" tabindex="-1"></a><span class="fu">### Q8 — How I used AI</span></span>
 <span id="cb10-432"><a href="#cb10-432" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-433"><a href="#cb10-433" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-434"><a href="#cb10-434" aria-hidden="true" tabindex="-1"></a><span class="fu">### Q9 — Four iterations (this repository&#39;s git history)</span></span>
-<span id="cb10-435"><a href="#cb10-435" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-436"><a href="#cb10-436" aria-hidden="true" tabindex="-1"></a>The iteration record is this repo&#39;s four commits, and they show the work was not a straight line:</span>
-<span id="cb10-437"><a href="#cb10-437" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-438"><a href="#cb10-438" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**`add template and data`** — the unit template plus both raw CSVs and the download script, committed *before* any analysis so every later step runs against a fixed, untouched input. The exploratory code at this point contains both early mistakes: the midnight-parsing bug and <span class="in">`-99.9`</span> still being averaged as if it were data.</span>
-<span id="cb10-439"><a href="#cb10-439" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**`Task 1`** — the data work: the cleaning pipeline (timestamp fix, sentinel recoding, clipping Tweed Heads to 2025), the per-site assertions, and the documentation (<span class="in">`metadata.md`</span>, <span class="in">`data_dictionary.csv`</span>). The fixes in this commit changed every number downstream.</span>
-<span id="cb10-440"><a href="#cb10-440" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**`Task 2`** — the blog: the four analyses (two seasonal rhythms, big-wave clustering, swell vs wind-sea, the two-buoy cross-check), with every statistic computed inline from the data instead of typed by hand, so the prose cannot drift from the data.</span>
-<span id="cb10-441"><a href="#cb10-441" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**`Task 3`** — this commit: the reflections in this tab, the rewritten README, and final polish.</span>
+<span id="cb10-433"><a href="#cb10-433" aria-hidden="true" tabindex="-1"></a>In this assignment, I used AI as a learning aid rather than a replacement for my own work. I drew on AI techniques to help clean the Gold Coast wave data — in particular, recoding the -99.9 sentinel values as NA and parsing the half-hourly timestamps — which taught me how to apply systematic data-processing logic to a real natural phenomenon, where missing readings are not random but often coincide with storms or buoy maintenance.</span>
+<span id="cb10-434"><a href="#cb10-434" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-435"><a href="#cb10-435" aria-hidden="true" tabindex="-1"></a>It also helped me write and structure my .R script files more accurately. By asking the AI to explain errors and suggest cleaner approaches, I learned to organise my code into readable, reproducible steps and to debug more independently over time.</span>
+<span id="cb10-436"><a href="#cb10-436" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-437"><a href="#cb10-437" aria-hidden="true" tabindex="-1"></a>Furthermore, I gained a deeper understanding of mapping techniques using the ozmaps and sf packages. The AI clarified how spatial data is stored as simple-features geometries and how to layer a monitoring-site point onto an Australian coastline map, which I then adapted and verified myself.</span>
+<span id="cb10-438"><a href="#cb10-438" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-439"><a href="#cb10-439" aria-hidden="true" tabindex="-1"></a>Throughout, I treated AI suggestions as a starting point: I tested every piece of code against my actual data, confirmed the output made sense, and made sure I understood the reasoning before including it.</span>
+<span id="cb10-440"><a href="#cb10-440" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-441"><a href="#cb10-441" aria-hidden="true" tabindex="-1"></a><span class="fu">### Q9 — Four iterations</span></span>
 <span id="cb10-442"><a href="#cb10-442" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-443"><a href="#cb10-443" aria-hidden="true" tabindex="-1"></a>Compared with my early-feedback checklist, two things changed: the separate &quot;does SST show a seasonal cycle&quot; sub-question was folded into the *two rhythms* comparison, and the second buoy was added. The Tweed Heads cross-check wasn&#39;t in the original plan at all — it grew out of the March missing-data problem, and ended up being the strongest part of the post.</span>
+<span id="cb10-443"><a href="#cb10-443" aria-hidden="true" tabindex="-1"></a>The iteration record is this <span class="co">[</span><span class="ot">repo’s</span><span class="co">](https://github.com/Hanwen-L/ETC5512-Assignment4)</span> four commits, and they show the work was not a straight line:</span>
 <span id="cb10-444"><a href="#cb10-444" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-445"><a href="#cb10-445" aria-hidden="true" tabindex="-1"></a><span class="fu">### AI Use Statement</span></span>
-<span id="cb10-446"><a href="#cb10-446" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-447"><a href="#cb10-447" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-448"><a href="#cb10-448" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb10-445"><a href="#cb10-445" aria-hidden="true" tabindex="-1"></a><span class="ss">1.  </span>**`add template and data`** — the unit template plus both raw CSVs and the download script, committed *before* any analysis so every later step runs against a fixed, untouched input. The exploratory code at this point contains both early mistakes: the midnight-parsing bug and <span class="in">`-99.9`</span> still being averaged as if it were data.</span>
+<span id="cb10-446"><a href="#cb10-446" aria-hidden="true" tabindex="-1"></a><span class="ss">2.  </span>**`Task 1`** — the data work: the cleaning pipeline (timestamp fix, sentinel recoding, clipping Tweed Heads to 2025), the per-site assertions, and the documentation (<span class="in">`metadata.md`</span>, <span class="in">`data_dictionary.csv`</span>). The fixes in this commit changed every number downstream.</span>
+<span id="cb10-447"><a href="#cb10-447" aria-hidden="true" tabindex="-1"></a><span class="ss">3.  </span>**`Task 2`** — the blog: the four analyses (two seasonal rhythms, big-wave clustering, swell vs wind-sea, the two-buoy cross-check), with every statistic computed inline from the data instead of typed by hand, so the prose cannot drift from the data.</span>
+<span id="cb10-448"><a href="#cb10-448" aria-hidden="true" tabindex="-1"></a><span class="ss">4.  </span>**`Task 3`** — this commit: the reflections in this tab, the rewritten README, and final polish.</span>
+<span id="cb10-449"><a href="#cb10-449" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-450"><a href="#cb10-450" aria-hidden="true" tabindex="-1"></a>Compared with my early-feedback checklist, two things changed: the separate &quot;does SST show a seasonal cycle&quot; sub-question was folded into the *two rhythms* comparison, and the second buoy was added. The Tweed Heads cross-check wasn&#39;t in the original plan at all — it grew out of the March missing-data problem, and ended up being the strongest part of the post.</span>
+<span id="cb10-451"><a href="#cb10-451" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-452"><a href="#cb10-452" aria-hidden="true" tabindex="-1"></a><span class="fu">### AI Use Statement</span></span>
+<span id="cb10-453"><a href="#cb10-453" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-454"><a href="#cb10-454" aria-hidden="true" tabindex="-1"></a>In this assignment, I only used AI to assist with the correct use of R code and enhance analytical thinking and academic writing in English.</span>
+<span id="cb10-455"><a href="#cb10-455" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-456"><a href="#cb10-456" aria-hidden="true" tabindex="-1"></a>More specifically, I used AI to :</span>
+<span id="cb10-457"><a href="#cb10-457" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-458"><a href="#cb10-458" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Suggestions about data cleaning.</span>
+<span id="cb10-459"><a href="#cb10-459" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-460"><a href="#cb10-460" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>How to use .r files in Assignment 4.</span>
+<span id="cb10-461"><a href="#cb10-461" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-462"><a href="#cb10-462" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>What are the limitations of the dataset?</span>
+<span id="cb10-463"><a href="#cb10-463" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-464"><a href="#cb10-464" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>How to create a buoy map</span>
+<span id="cb10-465"><a href="#cb10-465" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-466"><a href="#cb10-466" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>What kind of images can improve the quality of a post?</span>
+<span id="cb10-467"><a href="#cb10-467" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-468"><a href="#cb10-468" aria-hidden="true" tabindex="-1"></a>I created all code, visuals, written text and interpretations independently.</span>
+<span id="cb10-469"><a href="#cb10-469" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-470"><a href="#cb10-470" aria-hidden="true" tabindex="-1"></a>Here is the <span class="co">[</span><span class="ot">link</span><span class="co">](https://gemini.google.com/share/7f444e328bcf)</span> to all prompts used.</span>
+<span id="cb10-471"><a href="#cb10-471" aria-hidden="true" tabindex="-1"></a>:::</span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

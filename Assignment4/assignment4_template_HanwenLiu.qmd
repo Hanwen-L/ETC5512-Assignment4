@@ -394,7 +394,7 @@ Third, alignment. Tweed Heads' file doesn't stop on 31 December — it has 17,56
 
 The challenge I didn't see coming was **silent data loss**. I assumed a government CSV would be "clean", and it is — but my own reading code could still lose data without a single error message. The midnight bug taught me to validate the *shape* of the data, not just its values: the pipeline now asserts, per site, that there are exactly 17,520 rows, every timestamp parses, none are duplicated, and the 30-minute grid is unbroken. If any of that breaks, it fails loudly instead of lying quietly.
 
-The second challenge was realising the missing data was **not missing at random**. Gold Coast lost ~25% of March, and the gap sat exactly on top of the year's biggest swell — the outage was almost certainly *caused by* the storm I most wanted to measure. Just dropping the NAs would have silently under-counted the most interesting event in the data. That is what pushed me to bring in the Tweed Heads buoy: a near-complete second record that covered the gap, and showed March was even rougher than Gold Coast's broken record suggested. Turning a missing-data problem into a finding is the part of this project I'm most pleased with.
+The second challenge was realising the missing data was **not missing at random**. Gold Coast lost \~25% of March, and the gap sat exactly on top of the year's biggest swell — the outage was almost certainly *caused by* the storm I most wanted to measure. Just dropping the NAs would have silently under-counted the most interesting event in the data. That is what pushed me to bring in the Tweed Heads buoy: a near-complete second record that covered the gap, and showed March was even rougher than Gold Coast's broken record suggested. Turning a missing-data problem into a finding is the part of this project I'm most pleased with.
 
 The quietest challenge was self-discipline: wave height and sea temperature are positively correlated month-to-month, and it would have been easy to report that as a finding. It is really just two seasonal curves overlapping — a confound, not a relationship.
 
@@ -410,19 +410,42 @@ Next steps: pull several years and more sites along the coast to test whether 20
 
 ### Q8 — How I used AI
 
+In this assignment, I used AI as a learning aid rather than a replacement for my own work. I drew on AI techniques to help clean the Gold Coast wave data — in particular, recoding the -99.9 sentinel values as NA and parsing the half-hourly timestamps — which taught me how to apply systematic data-processing logic to a real natural phenomenon, where missing readings are not random but often coincide with storms or buoy maintenance.
 
-### Q9 — Four iterations (this repository's git history)
+It also helped me write and structure my .R script files more accurately. By asking the AI to explain errors and suggest cleaner approaches, I learned to organise my code into readable, reproducible steps and to debug more independently over time.
 
-The iteration record is this repo's four commits, and they show the work was not a straight line:
+Furthermore, I gained a deeper understanding of mapping techniques using the ozmaps and sf packages. The AI clarified how spatial data is stored as simple-features geometries and how to layer a monitoring-site point onto an Australian coastline map, which I then adapted and verified myself.
 
-1. **`add template and data`** — the unit template plus both raw CSVs and the download script, committed *before* any analysis so every later step runs against a fixed, untouched input. The exploratory code at this point contains both early mistakes: the midnight-parsing bug and `-99.9` still being averaged as if it were data.
-2. **`Task 1`** — the data work: the cleaning pipeline (timestamp fix, sentinel recoding, clipping Tweed Heads to 2025), the per-site assertions, and the documentation (`metadata.md`, `data_dictionary.csv`). The fixes in this commit changed every number downstream.
-3. **`Task 2`** — the blog: the four analyses (two seasonal rhythms, big-wave clustering, swell vs wind-sea, the two-buoy cross-check), with every statistic computed inline from the data instead of typed by hand, so the prose cannot drift from the data.
-4. **`Task 3`** — this commit: the reflections in this tab, the rewritten README, and final polish.
+Throughout, I treated AI suggestions as a starting point: I tested every piece of code against my actual data, confirmed the output made sense, and made sure I understood the reasoning before including it.
+
+### Q9 — Four iterations
+
+The iteration record is this [repo’s](https://github.com/Hanwen-L/ETC5512-Assignment4) four commits, and they show the work was not a straight line:
+
+1.  **`add template and data`** — the unit template plus both raw CSVs and the download script, committed *before* any analysis so every later step runs against a fixed, untouched input. The exploratory code at this point contains both early mistakes: the midnight-parsing bug and `-99.9` still being averaged as if it were data.
+2.  **`Task 1`** — the data work: the cleaning pipeline (timestamp fix, sentinel recoding, clipping Tweed Heads to 2025), the per-site assertions, and the documentation (`metadata.md`, `data_dictionary.csv`). The fixes in this commit changed every number downstream.
+3.  **`Task 2`** — the blog: the four analyses (two seasonal rhythms, big-wave clustering, swell vs wind-sea, the two-buoy cross-check), with every statistic computed inline from the data instead of typed by hand, so the prose cannot drift from the data.
+4.  **`Task 3`** — this commit: the reflections in this tab, the rewritten README, and final polish.
 
 Compared with my early-feedback checklist, two things changed: the separate "does SST show a seasonal cycle" sub-question was folded into the *two rhythms* comparison, and the second buoy was added. The Tweed Heads cross-check wasn't in the original plan at all — it grew out of the March missing-data problem, and ended up being the strongest part of the post.
 
 ### AI Use Statement
 
+In this assignment, I only used AI to assist with the correct use of R code and enhance analytical thinking and academic writing in English.
 
+More specifically, I used AI to :
+
+- Suggestions about data cleaning.
+
+- How to use .r files in Assignment 4.
+
+- What are the limitations of the dataset?
+
+- How to create a buoy map
+
+- What kind of images can improve the quality of a post?
+
+I created all code, visuals, written text and interpretations independently.
+
+Here is the [link](https://gemini.google.com/share/7f444e328bcf) to all prompts used.
 :::
